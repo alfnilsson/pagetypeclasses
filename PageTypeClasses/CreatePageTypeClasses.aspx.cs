@@ -241,9 +241,10 @@ namespace {0}
                 )
                 return String.Empty;
 
+            if (IsType<PropertyDropDownList>(definitionType))
+                uiHint = @"""DropDownList""";
             if (IsType<PropertyAppSettings>(definitionType))
-                return String.Format(@"{1}[BackingType(typeof({0}))]", UsingTextBox.Text.Contains(" " + definitionType.Namespace + ";") ? definitionType.Name : definitionType.FullName, CodeIndent);
-
+                uiHint = @"""AppSettings""";
             if (IsType<PropertyImageUrl>(definitionType))
                 uiHint = "UIHint.Image";
             if (IsType<PropertyDocumentUrl>(definitionType))
