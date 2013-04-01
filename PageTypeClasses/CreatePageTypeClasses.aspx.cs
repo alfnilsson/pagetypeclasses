@@ -193,6 +193,8 @@ namespace {0}
                         stringBuilder.AppendFormat("{0}[Searchable]{1}", CodeIndent, Environment.NewLine);
                     if (definition.LanguageSpecific)
                         stringBuilder.AppendFormat("{0}[CultureSpecific]{1}", CodeIndent, Environment.NewLine);
+                    if (!definition.DisplayEditUI)
+                        stringBuilder.AppendFormat("{0}[[ScaffoldColumn(false)]]{1}", CodeIndent, Environment.NewLine);
 
                     string backingType = GetBackingType(definition);
                     if (!String.IsNullOrEmpty(backingType))
@@ -203,7 +205,6 @@ namespace {0}
             Description = ""{2}"",
             Order = {3},
             GroupName = ""{4}"")]
-        [Editable({7})]
         public virtual {5} {6} {{ get; set; }}",
                         /*0*/ CodeIndent,
                         /*1*/ definition.EditCaption.Replace("\"", "'"),
@@ -211,8 +212,7 @@ namespace {0}
                         /*3*/ sortOrder,
                         /*4*/ definition.Tab.Name,
                         /*5*/ GetDataType(definition.Type),
-                        /*6*/ newPropertyName,
-                        /*7*/ definition.DisplayEditUI.ToString().ToLower());
+                        /*6*/ newPropertyName);
 
                     stringBuilder.AppendLine(String.Empty);
                     stringBuilder.AppendLine(String.Empty);
