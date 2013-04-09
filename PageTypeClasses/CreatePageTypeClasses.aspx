@@ -1,5 +1,5 @@
-﻿<%@ Page Language="C#" AutoEventWireup="false" CodeBehind="CreatePageTypeClasses.aspx.cs"
-    Inherits="Toders.Web.Plugins.CreatePageTypeClasses" Title="Create Page Type Classes" %>
+﻿<%@ Page Language="C#" AutoEventWireup="False" CodeBehind="CreatePageTypeClasses.aspx.cs"
+    Inherits="Pride.Web.Plugins.CreatePageTypeClasses" Title="Create Page Type Classes" %>
 
 <%@ Register TagPrefix="EPiServerUI" Namespace="EPiServer.UI.WebControls" Assembly="EPiServer.UI" %>
 <%-- ReSharper disable Asp.ContentPlaceholderNotResolved --%>
@@ -50,7 +50,8 @@ using EPiServer.DataAnnotations;
 using EPiServer.Filters;
 using EPiServer.Framework.DataAnnotations;
 using EPiServer.SpecializedProperties;
-using EPiServer.Web;</asp:TextBox>
+using EPiServer.Web;
+using EPiServer.XForm;</asp:TextBox>
                 </div>
                 <div class="epi-indent">
                     <EPiServerUI:ToolButton OnClick="ButtonSubmitClick" runat="server" text="Create Classes" skinid="Import" />

@@ -16,7 +16,7 @@ using EPiServer.SpecializedProperties;
 using EPiServer.UI;
 using EPiServer.Web;
 
-namespace Toders.Web.Plugins
+namespace Pride.Web.Plugins
 {
     [GuiPlugIn(Area = PlugInArea.AdminMenu, DisplayName = "Create Classes from Page Types",
         RequiredAccess = AccessLevel.Administer, Url = "~/Plugins/CreatePageTypeClasses.aspx")]
@@ -193,8 +193,10 @@ namespace {0}
                         stringBuilder.AppendFormat("{0}[Searchable]{1}", CodeIndent, Environment.NewLine);
                     if (definition.LanguageSpecific)
                         stringBuilder.AppendFormat("{0}[CultureSpecific]{1}", CodeIndent, Environment.NewLine);
+                    if (definition.Type.DataType == PropertyDataType.LongString && !IsXhtmlString(definition.Type))
+                        stringBuilder.AppendFormat(@"{0}[UIHint(""textarea"")]{1}", CodeIndent, Environment.NewLine);
                     if (!definition.DisplayEditUI)
-                        stringBuilder.AppendFormat("{0}[[ScaffoldColumn(false)]]{1}", CodeIndent, Environment.NewLine);
+                        stringBuilder.AppendFormat("{0}[ScaffoldColumn(false)]{1}", CodeIndent, Environment.NewLine);
 
                     string backingType = GetBackingType(definition);
                     if (!String.IsNullOrEmpty(backingType))
@@ -277,9 +279,8 @@ namespace {0}
                 case PropertyDataType.LinkCollection:
                     return "LinkItemCollection";
                 case PropertyDataType.LongString:
-
                     //In my example project we had Custom Properties inheriting from PropertyXhtmlString only to programatically set available buttons
-                    if (typeof(PropertyXhtmlString).IsAssignableFrom(definitionType.DefinitionType))
+                    if (IsXhtmlString(definitionType))
                         return "XhtmlString";
                     return "string";
                 case PropertyDataType.Number:
@@ -291,10 +292,17 @@ namespace {0}
                 case PropertyDataType.String:
                     if (typeof(PropertyUrl).IsAssignableFrom(definitionType.DefinitionType))
                         return "Url";
+                    if (typeof(PropertyXForm).IsAssignableFrom(definitionType.DefinitionType))
+                        return "XForm";
                     return "string";
                 default:
                     return "object";
             }
+        }
+
+        private static bool IsXhtmlString(PropertyDefinitionType definitionType)
+        {
+            return typeof(PropertyXhtmlString).IsAssignableFrom(definitionType.DefinitionType);
         }
 
         private string OutputDirectory(string name)
@@ -346,11 +354,11 @@ namespace {0}
         {
             var allowedPageTypeNames = ServiceLocator.Current.GetInstance<IAvailablePageTypes>().GetSetting(pageType.Name).AllowedPageTypeNames
                                                                                                                           .Select(name =>
-                                                                                                                              {
-                                                                                                                                  var container = GetClassContainer(name);
-                                                                                                                                  string className = String.IsNullOrEmpty(container) ? GetClassName(name) : container + "." + GetClassName(name);
-                                                                                                                                  return String.Format("typeof({0})", className);
-                                                                                                                              })
+                                                                                                                          {
+                                                                                                                              var container = GetClassContainer(name);
+                                                                                                                              string className = String.IsNullOrEmpty(container) ? GetClassName(name) : container + "." + GetClassName(name);
+                                                                                                                              return String.Format("typeof({0})", className);
+                                                                                                                          })
                                                                                                                           .ToList();
             if (allowedPageTypeNames.Any())
             {
