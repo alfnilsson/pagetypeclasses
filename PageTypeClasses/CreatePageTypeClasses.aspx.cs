@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -9,6 +9,7 @@ using System.Web.UI.WebControls;
 using EPiServer.Core;
 using EPiServer.DataAbstraction;
 using EPiServer.DataAbstraction.PageTypeAvailability;
+using EPiServer.Filters;
 using EPiServer.PlugIn;
 using EPiServer.Security;
 using EPiServer.ServiceLocation;
@@ -126,12 +127,11 @@ namespace {0}
         
         public override void  SetDefaultValues(ContentType contentType)
         {{
- 	        base.SetDefaultValues(contentType);
+             base.SetDefaultValues(contentType);
 
             VisibleInMenu = {7};
-            this[MetaDataProperties.PageChildOrderRule] = FilterSortOrder.{4};
             this[MetaDataProperties.PageTargetFrame] = Frame.Load({14});
-            this[MetaDataProperties.PagePeerOrder] = {16};{13}{15}{17}{18}
+            this[MetaDataProperties.PagePeerOrder] = {16};{4}{13}{15}{17}{18}
         }}
 
         #endregion
@@ -142,7 +142,7 @@ namespace {0}
                             /*1*/ pageType.GUID,
                             /*2*/ pageType.Name,
                             /*3*/ pageType.FileName,
-                            /*4*/ pageType.Defaults.ChildOrderRule,
+                            /*4*/ pageType.Defaults.ChildOrderRule != FilterSortOrder.None ? String.Format("{1}{1}{1}this[MetaDataProperties.PageChildOrderRule] = FilterSortOrder.{0};{2}", pageType.Defaults.ChildOrderRule, CodeIndent, Environment.NewLine) : "",
                             /*5*/ desc.Replace("\"", "'"),
                             /*6*/ pageType.SortOrder,
                             /*7*/ pageType.Defaults.VisibleInMenu.ToString(CultureInfo.InvariantCulture).ToLower(),
@@ -354,11 +354,11 @@ namespace {0}
         {
             var allowedPageTypeNames = ServiceLocator.Current.GetInstance<IAvailablePageTypes>().GetSetting(pageType.Name).AllowedPageTypeNames
                                                                                                                           .Select(name =>
-                                                                                                                          {
-                                                                                                                              var container = GetClassContainer(name);
-                                                                                                                              string className = String.IsNullOrEmpty(container) ? GetClassName(name) : container + "." + GetClassName(name);
-                                                                                                                              return String.Format("typeof({0})", className);
-                                                                                                                          })
+                                                                                                                              {
+                                                                                                                                  var container = GetClassContainer(name);
+                                                                                                                                  string className = String.IsNullOrEmpty(container) ? GetClassName(name) : container + "." + GetClassName(name);
+                                                                                                                                  return String.Format("typeof({0})", className);
+                                                                                                                              })
                                                                                                                           .ToList();
             if (allowedPageTypeNames.Any())
             {
