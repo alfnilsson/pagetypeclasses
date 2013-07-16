@@ -209,8 +209,8 @@ namespace {0}
             GroupName = ""{4}"")]
         public virtual {5} {6} {{ get; set; }}",
                         /*0*/ CodeIndent,
-                        /*1*/ definition.EditCaption.Replace("\"", "'"),
-                        /*2*/ definition.HelpText.Replace("\"", "'"),
+                        /*1*/ (definition.EditCaption ?? definition.Name).Replace("\"", "'"),
+                        /*2*/ (definition.HelpText ?? String.Empty).Replace("\"", "'"),
                         /*3*/ sortOrder,
                         /*4*/ definition.Tab.Name,
                         /*5*/ GetDataType(definition.Type),
