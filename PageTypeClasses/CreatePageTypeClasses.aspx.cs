@@ -8,20 +8,19 @@ using System.Text.RegularExpressions;
 using System.Web.UI.WebControls;
 using EPiServer.Core;
 using EPiServer.DataAbstraction;
-using EPiServer.DataAbstraction.PageTypeAvailability;
 using EPiServer.Filters;
 using EPiServer.PlugIn;
 using EPiServer.Security;
 using EPiServer.ServiceLocation;
+using EPiServer.Shell.WebForms;
 using EPiServer.SpecializedProperties;
-using EPiServer.UI;
 using EPiServer.Web;
 
 namespace Pride.Web.Plugins
 {
     [GuiPlugIn(Area = PlugInArea.AdminMenu, DisplayName = "Create Classes from Page Types",
         RequiredAccess = AccessLevel.Administer, Url = "~/Plugins/CreatePageTypeClasses.aspx")]
-    public partial class CreatePageTypeClasses : SystemPageBase
+    public partial class CreatePageTypeClasses : WebFormsBase
     {
         private StringBuilder _changeLog;
         private StringBuilder ChangeLog
@@ -40,15 +39,13 @@ namespace Pride.Web.Plugins
         protected override void OnPreInit(EventArgs e)
         {
             base.OnPreInit(e);
-
-            MasterPageFile = ResolveUrlFromUI("MasterPages/EPiServerUI.master");
             SystemMessageContainer.Heading = Title;
         }
 
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);
-            if (!IsPostBack)
+            if (IsPostBack == false)
             {
                 var repository = ServiceLocator.Current.GetInstance<PageTypeRepository>();
                 PageTypeCheckBoxList.DataSource = repository.List();
@@ -91,7 +88,7 @@ namespace Pride.Web.Plugins
         {
             foreach (ListItem li in PageTypeCheckBoxList.Items)
             {
-                if (!li.Selected)
+                if (li.Selected == false)
                 {
                     var repository = ServiceLocator.Current.GetInstance<PageTypeRepository>();
                     var pageType = repository.Load(int.Parse(li.Value));
@@ -100,7 +97,7 @@ namespace Pride.Web.Plugins
                     var classCont = GetClassContainer(pageType.Name);
                     ret.AppendFormat("Name: {0}, ClassName: {1}, Directory: {2}<br />", pageType.Name,
                                      GetClassName(pageType.Name), dir);
-                    if (!Directory.Exists(dir))
+                    if (Directory.Exists(dir) == false)
                     {
                         Directory.CreateDirectory(OutputDirectory(pageType.Name));
                     }
@@ -149,7 +146,7 @@ namespace {0}
                             /*8*/ className,
                             /*9*/ BaseClassTextBox.Text,
                             /*10*/ GetProperties(pageType),
-                            /*11*/ GetAvailablePageTypes(pageType),
+                            /*11*/ GetAvailablePageTypes(pageType, repository),
                             /*12*/ pageType.IsAvailable.ToString(CultureInfo.InvariantCulture).ToLower(),
                             /*13*/ PageReference.IsNullOrEmpty(pageType.Defaults.ArchivePageLink) ? String.Empty : String.Format(@"{1}{1}{1}ArchiveLink = new PageReference(""{0}"");{2}", pageType.Defaults.ArchivePageLink, CodeIndent, Environment.NewLine),
                             /*14*/ pageType.Defaults.DefaultFrame.ID,
@@ -193,13 +190,13 @@ namespace {0}
                         stringBuilder.AppendFormat("{0}[Searchable]{1}", CodeIndent, Environment.NewLine);
                     if (definition.LanguageSpecific)
                         stringBuilder.AppendFormat("{0}[CultureSpecific]{1}", CodeIndent, Environment.NewLine);
-                    if (definition.Type.DataType == PropertyDataType.LongString && !IsXhtmlString(definition.Type))
+                    if (definition.Type.DataType == PropertyDataType.LongString && DefinitionTypeIs<PropertyXhtmlString>(definition.Type) == false && DefinitionTypeIs<PropertyContentArea>(definition.Type) == false)
                         stringBuilder.AppendFormat(@"{0}[UIHint(""textarea"")]{1}", CodeIndent, Environment.NewLine);
-                    if (!definition.DisplayEditUI)
+                    if (definition.DisplayEditUI == false)
                         stringBuilder.AppendFormat("{0}[ScaffoldColumn(false)]{1}", CodeIndent, Environment.NewLine);
 
                     string backingType = GetBackingType(definition);
-                    if (!String.IsNullOrEmpty(backingType))
+                    if (String.IsNullOrEmpty(backingType) == false)
                         stringBuilder.AppendLine(backingType);
 
                     stringBuilder.AppendFormat(
@@ -235,7 +232,8 @@ namespace {0}
             if (IsType<PropertyString>(definitionType)
                 || IsType<PropertyPageReference>(definitionType)
                 || IsType<PropertyBoolean>(definitionType)
-                || IsType<PropertyLongString>(definitionType)
+                || IsType<PropertyXhtmlString>(definitionType)
+                || IsType<PropertyContentArea>(definitionType)
                 || IsType<PropertyNumber>(definitionType)
                 || IsType<PropertyUrl>(definitionType)
                 || IsType<PropertyLinkCollection>(definitionType)
@@ -252,10 +250,20 @@ namespace {0}
             if (IsType<PropertyDocumentUrl>(definitionType))
                 uiHint = "UIHint.Document";
 
-            if (!String.IsNullOrEmpty(uiHint))
+            if (String.IsNullOrEmpty(uiHint) == false)
                 return String.Format("{1}[UIHint({0})]", uiHint, CodeIndent);
 
-            return String.Format("{1}//DefinitionType={0}", definitionType.FullName, CodeIndent);
+            string attribute = string.Format("[BackingType(typeof({0})]", definitionType.FullName);
+
+            if (BackingTypeCheckBox.Checked)
+            {
+                return string.Format("{1}{0}", attribute, CodeIndent);
+            }
+
+            return string.Format("{2}// Implement {0} or uncomment this attribute: {1}",
+                definitionType.FullName,
+                attribute,
+                CodeIndent);
         }
 
         private bool IsType<T>(Type definitionType)
@@ -280,13 +288,17 @@ namespace {0}
                     return "LinkItemCollection";
                 case PropertyDataType.LongString:
                     //In my example project we had Custom Properties inheriting from PropertyXhtmlString only to programatically set available buttons
-                    if (IsXhtmlString(definitionType))
+                    if (DefinitionTypeIs<PropertyXhtmlString>(definitionType))
                         return "XhtmlString";
+                    if (DefinitionTypeIs<PropertyContentArea>(definitionType))
+                        return "ContentArea";
                     return "string";
                 case PropertyDataType.Number:
                     return "int?";
                 case PropertyDataType.PageReference:
                     return "PageReference";
+                case PropertyDataType.ContentReference:
+                    return "ContentReference";
                 case PropertyDataType.PageType:
                     return "int";
                 case PropertyDataType.String:
@@ -300,9 +312,9 @@ namespace {0}
             }
         }
 
-        private static bool IsXhtmlString(PropertyDefinitionType definitionType)
+        private static bool DefinitionTypeIs<TPropertyDefinitionType>(PropertyDefinitionType definitionType)
         {
-            return typeof(PropertyXhtmlString).IsAssignableFrom(definitionType.DefinitionType);
+            return typeof(TPropertyDefinitionType).IsAssignableFrom(definitionType.DefinitionType);
         }
 
         private string OutputDirectory(string name)
@@ -350,19 +362,22 @@ namespace {0}
             return builder.ToString();
         }
 
-        private string GetAvailablePageTypes(PageType pageType)
+        private string GetAvailablePageTypes(PageType pageType, PageTypeRepository repository)
         {
-            var allowedPageTypeNames = ServiceLocator.Current.GetInstance<IAvailablePageTypes>().GetSetting(pageType.Name).AllowedPageTypeNames
-                                                                                                                          .Select(name =>
-                                                                                                                              {
-                                                                                                                                  var container = GetClassContainer(name);
-                                                                                                                                  string className = String.IsNullOrEmpty(container) ? GetClassName(name) : container + "." + GetClassName(name);
-                                                                                                                                  return String.Format("typeof({0})", className);
-                                                                                                                              })
-                                                                                                                          .ToList();
+            var availableContentTypes = ServiceLocator.Current.GetInstance<IAvailableContentTypes>();
+            AvailableSetting availableSetting = availableContentTypes.GetSetting(pageType.Name);
+            List<string> allowedPageTypeNames = availableSetting.AllowedContentTypeNames
+                .Where(name => repository.Load(name) != null)
+                .Select(name =>
+                {
+                    var container = GetClassContainer(name);
+                    string className = String.IsNullOrEmpty(container) ? GetClassName(name) : container + "." + GetClassName(name);
+                    return String.Format("typeof({0})", className);
+                })
+                .ToList();
             if (allowedPageTypeNames.Any())
             {
-                return String.Format(@"{0}[AvailablePageTypes(Include = new[] {{ {1} }})]", Environment.NewLine, String.Join(",", allowedPageTypeNames));
+                return String.Format(@"{0}[AvailableContentTypes(Include = new[] {{ {1} }})]", Environment.NewLine, String.Join(",", allowedPageTypeNames));
             }
             return String.Empty;
         }

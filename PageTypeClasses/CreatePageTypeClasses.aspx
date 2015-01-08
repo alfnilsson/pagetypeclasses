@@ -1,5 +1,6 @@
 ﻿<%@ Page Language="C#" AutoEventWireup="False" CodeBehind="CreatePageTypeClasses.aspx.cs"
-    Inherits="Pride.Web.Plugins.CreatePageTypeClasses" Title="Create Page Type Classes" %>
+    Inherits="Pride.Web.Plugins.CreatePageTypeClasses" Title="Create Page Type Classes"
+    EnableViewState="true" %>
 
 <%@ Register TagPrefix="EPiServerUI" Namespace="EPiServer.UI.WebControls" Assembly="EPiServer.UI" %>
 <%-- ReSharper disable Asp.ContentPlaceholderNotResolved --%>
@@ -21,6 +22,11 @@
                 <div>
                     <asp:Label runat="server" AssociatedControlID="BaseClassTextBox">PageType base class:</asp:Label>
                     <asp:TextBox ID="BaseClassTextBox" runat="server">PageData</asp:TextBox>
+                </div>
+            
+                <div>
+                    <asp:Label runat="server" AssociatedControlID="BackingTypeCheckBox">DefinitionType as BackingType instead of comment</asp:Label>
+                    <asp:Checkbox ID="BackingTypeCheckBox" runat="server"/>
                 </div>
             
                 <div>
@@ -50,8 +56,7 @@ using EPiServer.DataAnnotations;
 using EPiServer.Filters;
 using EPiServer.Framework.DataAnnotations;
 using EPiServer.SpecializedProperties;
-using EPiServer.Web;
-using EPiServer.XForm;</asp:TextBox>
+using EPiServer.Web;</asp:TextBox>
                 </div>
                 <div class="epi-indent">
                     <EPiServerUI:ToolButton OnClick="ButtonSubmitClick" runat="server" text="Create Classes" skinid="Import" />

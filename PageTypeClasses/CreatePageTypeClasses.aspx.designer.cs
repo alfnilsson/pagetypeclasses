@@ -7,7 +7,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace Toders.Web.Plugins {
+namespace Pride.Web.Plugins {
     
     
     public partial class CreatePageTypeClasses {
@@ -47,6 +47,15 @@ namespace Toders.Web.Plugins {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.TextBox BaseClassTextBox;
+        
+        /// <summary>
+        /// BackingTypeCheckBox control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.CheckBox BackingTypeCheckBox;
         
         /// <summary>
         /// NamespaceTextBox control.
