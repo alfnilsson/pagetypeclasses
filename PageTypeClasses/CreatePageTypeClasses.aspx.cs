@@ -352,7 +352,7 @@ namespace {0}
 
         private string GetAvailablePageTypes(PageType pageType)
         {
-            var allowedPageTypeNames = ServiceLocator.Current.GetInstance<IAvailablePageTypes>().GetSetting(pageType.Name).AllowedPageTypeNames
+            var allowedPageTypeNames = ServiceLocator.Current.GetInstance<IAvailableContentTypes>().GetSetting(pageType.Name).AllowedContentTypeNames
                                                                                                                           .Select(name =>
                                                                                                                               {
                                                                                                                                   var container = GetClassContainer(name);
