@@ -258,7 +258,7 @@ namespace {0}
             if (BackingTypeCheckBox.Checked)
             {
                 return string.Format("{1}{0}", attribute, CodeIndent);
-            }
+        }
 
             return string.Format("{2}// Implement {0} or uncomment this attribute: {1}",
                 definitionType.FullName,
@@ -364,17 +364,14 @@ namespace {0}
 
         private string GetAvailablePageTypes(PageType pageType, PageTypeRepository repository)
         {
-            var availableContentTypes = ServiceLocator.Current.GetInstance<IAvailableContentTypes>();
-            AvailableSetting availableSetting = availableContentTypes.GetSetting(pageType.Name);
-            List<string> allowedPageTypeNames = availableSetting.AllowedContentTypeNames
-                .Where(name => repository.Load(name) != null)
-                .Select(name =>
-                {
-                    var container = GetClassContainer(name);
-                    string className = String.IsNullOrEmpty(container) ? GetClassName(name) : container + "." + GetClassName(name);
-                    return String.Format("typeof({0})", className);
-                })
-                .ToList();
+            var allowedPageTypeNames = ServiceLocator.Current.GetInstance<IAvailableContentTypes>().GetSetting(pageType.Name).AllowedContentTypeNames
+                                                                                                                          .Select(name =>
+                                                                                                                              {
+                                                                                                                                  var container = GetClassContainer(name);
+                                                                                                                                  string className = String.IsNullOrEmpty(container) ? GetClassName(name) : container + "." + GetClassName(name);
+                                                                                                                                  return String.Format("typeof({0})", className);
+                                                                                                                              })
+                                                                                                                          .ToList();
             if (allowedPageTypeNames.Any())
             {
                 return String.Format(@"{0}[AvailableContentTypes(Include = new[] {{ {1} }})]", Environment.NewLine, String.Join(",", allowedPageTypeNames));
